@@ -17,14 +17,16 @@ class MLModel:
     
     def __init__(self):
         self.models = {}
-        self.feature_columns = None
+        self.feature_columns = {}
+        self.feature_order = {}
     
-    def train_model(self, data, test_size=0.2, lags=[1, 24, 48], roll_windows=[3, 24]):
+    def train_model(self, data, place, test_size=0.2, lags=[1, 24, 48], roll_windows=[3, 24]):
         """
         Train a Random Forest model for time series prediction
         
         Args:
             data (pd.DataFrame): Time series data with Timestamp and Jumlah columns
+            place (str): Name of the place for storing feature columns
             test_size (float): Proportion of data to use for testing
             lags (list): List of lag periods for features
             roll_windows (list): List of rolling window sizes for features
@@ -56,7 +58,9 @@ class MLModel:
         y_test = test["y"]
         
         # Store feature columns for later use
-        self.feature_columns = X_train.columns.tolist()
+        feature_columns = X_train.columns.tolist()
+        self.feature_columns[place] = feature_columns
+        self.feature_order[place] = feature_columns
         
         # Train model
         model = RandomForestRegressor(
@@ -91,13 +95,45 @@ class MLModel:
         
         return model, metrics
     
-    def get_predictions(self, model, data, lags=[1, 24, 48], roll_windows=[3, 24]):
+    def _ensure_feature_consistency(self, features_df, place):
+        """
+        Ensure that features DataFrame has the same columns and order as training data
+        
+        Args:
+            features_df (pd.DataFrame): Features DataFrame
+            place (str): Name of the place
+            
+        Returns:
+            pd.DataFrame: Features DataFrame with consistent columns
+        """
+        if place not in self.feature_columns:
+            raise ValueError(f"No feature columns found for place: {place}")
+        
+        expected_columns = self.feature_columns[place]
+        
+        # Create a new DataFrame with the expected columns
+        consistent_df = pd.DataFrame(index=features_df.index)
+        
+        for col in expected_columns:
+            if col in features_df.columns:
+                consistent_df[col] = features_df[col]
+            else:
+                # Fill missing columns with 0
+                consistent_df[col] = 0.0
+        
+        # Ensure column order matches training data
+        consistent_df = consistent_df[expected_columns]
+        
+        return consistent_df
+    
+    def get_predictions(self, model, data, place, lags=[1, 24, 48], roll_windows=[3, 24]):
         """
         Get predictions for historical data
         
         Args:
             model: Trained model
             data (pd.DataFrame): Time series data
+            place (str): Name of the place
             lags (list): List of lag periods
             roll_windows (list): List of rolling window sizes
             
@@ -112,8 +148,8 @@ class MLModel:
         if features.empty:
             return {"error": "No features could be created from the data"}
         
-        # Make predictions
-        X = features.drop(columns=["y"])
+        # Ensure feature consistency
+        X = self._ensure_feature_consistency(features.drop(columns=["y"]), place)
         predictions = model.predict(X)
         
         # Create results dataframe
@@ -134,13 +170,14 @@ class MLModel:
             }
         }
     
-    def get_forecast(self, model, data, n_hours=24, lags=[1, 24, 48], roll_windows=[3, 24]):
+    def get_forecast(self, model, data, place, n_hours=24, lags=[1, 24, 48], roll_windows=[3, 24]):
         """
         Get forecast for next n_hours
         
         Args:
             model: Trained model
             data (pd.DataFrame): Historical time series data
+            place (str): Name of the place
             n_hours (int): Number of hours to forecast
             lags (list): List of lag periods
             roll_windows (list): List of rolling window sizes
@@ -156,6 +193,9 @@ class MLModel:
         forecast_features = ts_analyzer.create_forecast_features(
             data, forecast_hours=n_hours, lags=lags, roll_windows=roll_windows
         )
+        
+        # Ensure feature consistency
+        forecast_features = self._ensure_feature_consistency(forecast_features, place)
         
         # Make predictions
         predictions = model.predict(forecast_features)
@@ -186,13 +226,14 @@ class MLModel:
             }
         }
     
-    def get_forecast_with_status(self, model, data, n_hours=24, lags=[1, 24, 48], roll_windows=[3, 24]):
+    def get_forecast_with_status(self, model, data, place, n_hours=24, lags=[1, 24, 48], roll_windows=[3, 24]):
         """
         Get forecast with status classification
         
         Args:
             model: Trained model
             data (pd.DataFrame): Historical time series data
+            place (str): Name of the place
             n_hours (int): Number of hours to forecast
             lags (list): List of lag periods
             roll_windows (list): List of rolling window sizes
@@ -205,7 +246,7 @@ class MLModel:
         ts_analyzer = TimeSeriesAnalyzer()
         
         # Get basic forecast
-        forecast_result = self.get_forecast(model, data, n_hours, lags, roll_windows)
+        forecast_result = self.get_forecast(model, data, place, n_hours, lags, roll_windows)
         
         # Add status classification
         forecast_data = forecast_result["forecast"]
@@ -232,18 +273,24 @@ class MLModel:
             }
         }
     
-    def get_model_info(self, model):
+    def get_model_info(self, model, place):
         """
         Get information about the trained model
         
         Args:
             model: Trained model
+            place (str): Name of the place
             
         Returns:
             dict: Model information
         """
+        if place not in self.feature_columns:
+            return {"error": f"No feature information found for place: {place}"}
+        
+        feature_columns = self.feature_columns[place]
+        
         if hasattr(model, 'feature_importances_'):
-            feature_importance = dict(zip(self.feature_columns, model.feature_importances_))
+            feature_importance = dict(zip(feature_columns, model.feature_importances_))
         else:
             feature_importance = {}
         
@@ -252,7 +299,7 @@ class MLModel:
             "n_estimators": getattr(model, 'n_estimators', 'N/A'),
             "max_depth": getattr(model, 'max_depth', 'N/A'),
             "feature_importance": feature_importance,
-            "feature_columns": self.feature_columns
+            "feature_columns": feature_columns
         }
     
     def save_model(self, model, place, filepath):
@@ -269,7 +316,7 @@ class MLModel:
         model_data = {
             'model': model,
             'place': place,
-            'feature_columns': self.feature_columns
+            'feature_columns': self.feature_columns.get(place, [])
         }
         
         joblib.dump(model_data, filepath)

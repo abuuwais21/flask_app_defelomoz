@@ -217,6 +217,7 @@ def train_model():
         # Train the model
         model, metrics = ml_model.train_model(
             place_data, 
+            place,
             test_size=test_size, 
             lags=lags, 
             roll_windows=roll_windows
@@ -245,7 +246,7 @@ def get_predictions(place):
     
     try:
         # Get predictions
-        predictions = ml_model.get_predictions(trained_models[place], place_data)
+        predictions = ml_model.get_predictions(trained_models[place], place_data, place)
         return jsonify(predictions)
     except Exception as e:
         return jsonify({'error': f'Error getting predictions: {str(e)}'}), 400
@@ -278,6 +279,7 @@ def get_forecast(place):
         forecast = ml_model.get_forecast(
             trained_models[place], 
             place_data, 
+            place,
             n_hours=n_hours,
             lags=lags,
             roll_windows=roll_windows
@@ -314,6 +316,7 @@ def get_status_classification(place):
         forecast_with_status = ml_model.get_forecast_with_status(
             trained_models[place], 
             place_data, 
+            place,
             n_hours=n_hours,
             lags=lags,
             roll_windows=roll_windows
@@ -328,7 +331,7 @@ def get_model_info(place):
     if place not in trained_models:
         return jsonify({'error': f'No trained model found for place: {place}. Please train the model first.'}), 404
     
-    model_info = ml_model.get_model_info(trained_models[place])
+    model_info = ml_model.get_model_info(trained_models[place], place)
     return jsonify(model_info)
 
 @app.errorhandler(404)
