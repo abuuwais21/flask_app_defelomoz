@@ -101,15 +101,16 @@ def test_api():
         print(f"✗ Error training model: {str(e)}")
         return
     
-    # Test 7: Get forecast
-    print(f"\n7. Getting forecast for {test_place}...")
+    # Test 7: Get forecast with status
+    print(f"\n7. Getting forecast with status for {test_place}...")
     try:
         response = requests.get(f"{BASE_URL}/model/forecast/{test_place}?hours=12")
         if response.status_code == 200:
             forecast = response.json()
-            print("✓ Forecast retrieved")
+            print("✓ Forecast with status retrieved")
             print(f"  Forecast hours: {forecast['summary']['forecast_hours']}")
             print(f"  Average forecast: {forecast['summary']['avg_forecast']:.2f}")
+            print(f"  Status distribution: {forecast['summary']['status_distribution']}")
         else:
             print(f"✗ Forecast failed: {response.json()['error']}")
     except Exception as e:

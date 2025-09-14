@@ -53,7 +53,7 @@ def home():
             "/analysis/stats/<place>": "GET - Get time series statistics for specific place",
             "/model/train": "POST - Train ML model for predictions",
             "/model/predict/<place>": "GET - Get predictions for specific place",
-            "/model/forecast/<place>": "GET - Get forecast for next N hours",
+            "/model/forecast/<place>": "GET - Get forecast with status classification for next N hours",
             "/model/status/<place>": "GET - Get status classification for place",
             "/model/info/<place>": "GET - Get model information for specific place"
         },
@@ -61,7 +61,7 @@ def home():
             "upload_data": "POST /upload with CSV file",
             "get_places": "GET /data/places",
             "train_model": "POST /model/train with {\"place\": \"PlaceName\"}",
-            "get_forecast": "GET /model/forecast/PlaceName?hours=24"
+            "get_forecast": "GET /model/forecast/PlaceName?hours=24 (includes status classification)"
         }
     })
 
@@ -275,8 +275,8 @@ def get_forecast(place):
         return jsonify({'error': f'No data found for place: {place}'}), 404
     
     try:
-        # Get forecast
-        forecast = ml_model.get_forecast(
+        # Get forecast with status classification
+        forecast_with_status = ml_model.get_forecast_with_status(
             trained_models[place], 
             place_data, 
             place,
@@ -284,7 +284,7 @@ def get_forecast(place):
             lags=lags,
             roll_windows=roll_windows
         )
-        return jsonify(forecast)
+        return jsonify(forecast_with_status)
     except Exception as e:
         return jsonify({'error': f'Error getting forecast: {str(e)}'}), 400
 
