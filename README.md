@@ -1,134 +1,134 @@
-# Waste Management Time Series Analysis Flask API
+# Flask API Analisis Time Series Manajemen Sampah
 
-A REST API for waste management time series analysis and prediction, based on the original `main.py` analysis. This Flask application provides endpoints for data upload, analysis, and machine learning predictions.
+REST API untuk analisis time series dan prediksi manajemen sampah, berdasarkan analisis `main.py` asli. Aplikasi Flask ini menyediakan endpoint untuk upload data, analisis, dan prediksi machine learning.
 
-## Features
+## Fitur
 
-- **Data Upload**: Upload CSV files with waste management data
-- **Time Series Analysis**: Hourly data aggregation and feature engineering
-- **Machine Learning**: Random Forest model training and prediction
-- **Forecasting**: Predict waste levels for future hours
-- **Status Classification**: Classify waste levels as "Sepi", "Sedang", or "Rame"
-- **REST API**: Complete RESTful API with JSON responses
+- **Upload Data**: Upload file CSV dengan data manajemen sampah
+- **Analisis Time Series**: Agregasi data per jam dan feature engineering
+- **Machine Learning**: Pelatihan model Random Forest dan prediksi
+- **Forecasting**: Prediksi tingkat sampah untuk jam-jam mendatang
+- **Klasifikasi Status**: Klasifikasi tingkat sampah sebagai "Sepi", "Sedang", atau "Rame"
+- **REST API**: API RESTful lengkap dengan respons JSON
 
-## Installation
+## Instalasi
 
-1. Install the required dependencies:
+1. Install dependensi yang diperlukan:
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Run the Flask application:
+2. Jalankan aplikasi Flask:
 ```bash
 python main.py
 ```
 
-The API will be available at `http://localhost:5000`
+API akan tersedia di `http://localhost:5000`
 
-## API Endpoints
+## Endpoint API
 
-### Data Management
-- `POST /upload` - Upload CSV data file
-- `GET /data/info` - Get data information
-- `GET /data/places` - Get list of waste collection places
-- `GET /data/summary` - Get data summary statistics
+### Manajemen Data
+- `POST /upload` - Upload file data CSV
+- `GET /data/info` - Mendapatkan informasi data
+- `GET /data/places` - Mendapatkan daftar tempat pengumpulan sampah
+- `GET /data/summary` - Mendapatkan statistik ringkasan data
 
-### Analysis
-- `GET /analysis/hourly` - Get hourly aggregated data
-- `GET /analysis/plot/<place>` - Get plot data for specific place
-- `GET /analysis/stats/<place>` - Get time series statistics for specific place
+### Analisis
+- `GET /analysis/hourly` - Mendapatkan data agregasi per jam
+- `GET /analysis/plot/<place>` - Mendapatkan data plot untuk tempat tertentu
+- `GET /analysis/stats/<place>` - Mendapatkan statistik time series untuk tempat tertentu
 
 ### Machine Learning
-- `POST /model/train` - Train ML model for predictions
-- `GET /model/predict/<place>` - Get predictions for specific place
-- `GET /model/forecast/<place>` - Get forecast for next N hours
-- `GET /model/status/<place>` - Get status classification for place
-- `GET /model/info/<place>` - Get model information for specific place
+- `POST /model/train` - Melatih model ML untuk prediksi
+- `GET /model/predict/<place>` - Mendapatkan prediksi untuk tempat tertentu
+- `GET /model/forecast/<place>` - Mendapatkan forecast untuk N jam ke depan
+- `GET /model/status/<place>` - Mendapatkan klasifikasi status untuk tempat
+- `GET /model/info/<place>` - Mendapatkan informasi model untuk tempat tertentu
 
-## Usage Examples
+## Contoh Penggunaan
 
 ### 1. Upload Data
 ```bash
 curl -X POST -F "file=@tempat_sampah.csv" http://localhost:5000/upload
 ```
 
-### 2. Get Available Places
+### 2. Mendapatkan Tempat yang Tersedia
 ```bash
 curl http://localhost:5000/data/places
 ```
 
-### 3. Train Model
+### 3. Melatih Model
 ```bash
 curl -X POST -H "Content-Type: application/json" \
-  -d '{"place": "PlaceName"}' \
+  -d '{"place": "NamaTempat"}' \
   http://localhost:5000/model/train
 ```
 
-### 4. Get Forecast
+### 4. Mendapatkan Forecast
 ```bash
-curl "http://localhost:5000/model/forecast/PlaceName?hours=24"
+curl "http://localhost:5000/model/forecast/NamaTempat?hours=24"
 ```
 
-### 5. Get Status Classification
+### 5. Mendapatkan Klasifikasi Status
 ```bash
-curl "http://localhost:5000/model/status/PlaceName?hours=48"
+curl "http://localhost:5000/model/status/NamaTempat?hours=48"
 ```
 
-## Data Format
+## Format Data
 
-The CSV file should contain the following columns:
-- `Timestamp`: Date and time of the record
-- `Tempat`: Location/place name
-- `Jumlah`: Amount of waste
-- `Kategori`: Category of waste
+File CSV harus berisi kolom-kolom berikut:
+- `Timestamp`: Tanggal dan waktu record
+- `Tempat`: Nama lokasi/tempat
+- `Jumlah`: Jumlah sampah
+- `Kategori`: Kategori sampah
 
-## Model Parameters
+## Parameter Model
 
-The Random Forest model uses the following features:
-- **Time features**: hour, day of week, weekend flag
-- **Lag features**: 1, 24, 48 hours ago
-- **Rolling features**: 3 and 24 hour rolling means and standard deviations
+Model Random Forest menggunakan fitur-fitur berikut:
+- **Fitur waktu**: jam, hari dalam seminggu, flag weekend
+- **Fitur lag**: 1, 24, 48 jam yang lalu
+- **Fitur rolling**: rata-rata dan standar deviasi rolling 3 dan 24 jam
 
-## Status Classification
+## Klasifikasi Status
 
-Waste levels are classified as:
-- **Sepi**: ≤ 2 units
-- **Sedang**: 2-5 units  
-- **Rame**: > 5 units
+Tingkat sampah diklasifikasikan sebagai:
+- **Sepi**: ≤ 2 unit
+- **Sedang**: 2-5 unit  
+- **Rame**: > 5 unit
 
-## Project Structure
+## Struktur Proyek
 
 ```
 flask_app/
-├── main.py                 # Main Flask application
-├── requirements.txt        # Python dependencies
+├── main.py                 # Aplikasi Flask utama
+├── requirements.txt        # Dependensi Python
 ├── modules/
 │   ├── __init__.py
-│   ├── data_processor.py   # Data loading and preprocessing
-│   ├── time_series_analyzer.py  # Time series analysis
-│   └── ml_model.py        # Machine learning model
-└── uploads/               # Directory for uploaded files
+│   ├── data_processor.py   # Loading dan preprocessing data
+│   ├── time_series_analyzer.py  # Analisis time series
+│   └── ml_model.py        # Model machine learning
+└── uploads/               # Direktori untuk file yang diupload
 ```
 
-## Error Handling
+## Penanganan Error
 
-The API includes comprehensive error handling:
-- File validation
-- Data validation
-- Model training validation
-- Proper HTTP status codes
-- Detailed error messages
+API mencakup penanganan error yang komprehensif:
+- Validasi file
+- Validasi data
+- Validasi pelatihan model
+- Kode status HTTP yang tepat
+- Pesan error yang detail
 
-## Development
+## Pengembangan
 
-To run in development mode:
+Untuk menjalankan dalam mode development:
 ```bash
 python main.py
 ```
 
-The application will run with debug mode enabled and auto-reload on changes.
+Aplikasi akan berjalan dengan mode debug aktif dan auto-reload saat ada perubahan.
 
-## Dependencies
+## Dependensi
 
 - Flask 2.3.3
 - Flask-CORS 4.0.0
@@ -139,3 +139,4 @@ The application will run with debug mode enabled and auto-reload on changes.
 - seaborn 0.12.2
 - Werkzeug 2.3.7
 - joblib 1.3.2
+- gunicorn 23.0.0
